@@ -1,0 +1,25 @@
+[build-system]
+requires = [
+"hatchling", "beautifulsoup4==4.10.0",
+"bs4==0.0.1", "requests==2.28.2"
+]
+build-backend = "hatchling.build"
+
+[project]
+name = "eAmenu_waiter"
+version = "0.0.1"
+authors = [
+    { name = "5krc1", email = "skrci@dasadweb.com" },
+]
+description = "Package to manage your eAsistent meals automatically"
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/5KRC1/eAmenu"
+"Bug Tracer" = "https://github.com/5KRC1/eAmenu/issues"
