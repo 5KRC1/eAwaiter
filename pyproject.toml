@@ -6,12 +6,12 @@ requires = [
 build-backend = "hatchling.build"
 
 [project]
-name = "eAmenu_waiter"
+name = "eAwaiter"
 version = "0.0.1"
 authors = [
     { name = "5krc1", email = "skrci@dasadweb.com" },
 ]
-description = "Package to manage your eAsistent meals automatically"
+description = "Package to manage your eAsistent meals automatically."
 readme = "README.md"
 requires-python = ">=3.7"
 classifiers = [
@@ -21,5 +21,5 @@ classifiers = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/5KRC1/eAmenu"
-"Bug Tracer" = "https://github.com/5KRC1/eAmenu/issues"
+"Homepage" = "https://github.com/5KRC1/eAwaiter"
+"Bug Tracer" = "https://github.com/5KRC1/eAwaiter/issues"

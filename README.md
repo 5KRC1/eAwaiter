@@ -32,7 +32,7 @@ pip install git+https://github.com/5KRC1/eAwaiter.git
 - run in python "example.py"
 ```python
 ## example.py ##
-from eAwaiter.waiter import Waiter
+from waiter.waiter import Waiter
 
 waiter = Waiter()
 
