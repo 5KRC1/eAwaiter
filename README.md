@@ -8,7 +8,7 @@ eAwaiter was made out of pure laziness of mine. In eAsistent, meals can be chang
 If you are changing the code or using it locally, you can easily install and run it with the following commands:
 - Clone the project
 ```bash
-git clone https://github.com/5KRC1/eAmenu && cd eAmenu
+git clone https://github.com/5KRC1/eAwaiter && cd eAmenu
 ```
 - Setup Python venv
 ```bash
@@ -27,7 +27,7 @@ python examples/example.py
 To use the package, you simply follow the following instructions:
 - install with pip
 ```bash
-pip install git+https://github.com/5KRC1/eAmenu.git
+pip install git+https://github.com/5KRC1/eAwaiter.git
 ```
 - run in python "example.py"
 ```python
