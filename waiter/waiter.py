@@ -111,8 +111,8 @@ class Waiter():
             session = self.api.session
     
             # get info (school)
-            if not self.meal_ids:
-                raise CustomException("No meal_ids!")
+            if not self.meals:
+                raise CustomException("No meal's ids!")
 
             if self.disliked_foods and self.preferred_menu:
                 self.disliked_foods_changer(1)
