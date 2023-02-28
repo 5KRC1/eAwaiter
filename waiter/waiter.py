@@ -57,7 +57,7 @@ class Waiter():
             os.remove("school_info.txt")
             return self.set_school_info()
 
-        self.school_year, self.meal_ids, self.first_week_school = json.loads(school_info[0]), json.loads(school_info[1]), datetime.strptime(school_info[2], FORMAT)
+        self.school_year, self.meals, self.first_week_school = json.loads(school_info[0]), json.loads(school_info[1]), datetime.strptime(school_info[2], FORMAT)
         return json.loads(school_info[0]), json.loads(school_info[1]), datetime.strptime(school_info[2], FORMAT)
 
 
