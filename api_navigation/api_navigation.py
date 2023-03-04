@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup
 
 from datetime import datetime, timedelta
 import requests
+from utils.exception import ChangingMealsException
 
 class ApiNavigator():
     session = requests.Session()
@@ -149,9 +150,9 @@ class ApiNavigator():
         try:
             response = self.session.post(url, data=data, headers=headers)
             if not response.json()["status"]: # "ok" if successful "" if unsuccessful
-                raise CustomException(f"Unable to change meal for {date}")
+                raise ChangingMealsException(f"Unable to change meal ({action} to '{meal_id}' meal) for {date}!")
             # app.send_notification("Success", "Meal changed", True)
-            self.send_mail(f"Meal changed for {date}")
+            self.send_mail(f"Meal changed ({action} to '{meal_id}' meal) for {date}!")
             return True
         except Exception as e:
             self.send_mail(e)

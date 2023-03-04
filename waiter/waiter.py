@@ -7,7 +7,7 @@ import os
 
 from api_navigation.api_navigation import ApiNavigator
 from .helpers import *
-from utils.exception import CustomException
+from utils.exception import UserLoginException, MealFetchingExcetpion
 
 FORMAT = "%Y-%m-%d %H:%M:%S"
 # api = ApiNavigator()
@@ -106,13 +106,13 @@ class Waiter():
     
         # login
         if self.failed_login:
-            raise CustomException("Failed to login! Check your credentials!")
+            raise UserLoginException("Failed to login! Check your credentials!")
         try:
             session = self.api.session
     
             # get info (school)
             if not self.meals:
-                raise CustomException("No meal's ids!")
+                raise MealFetchingException("No meals' ids!")
 
             if self.disliked_foods and self.preferred_menu:
                 self.disliked_foods_changer(1)
