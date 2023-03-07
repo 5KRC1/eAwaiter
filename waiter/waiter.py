@@ -39,7 +39,7 @@ class Waiter():
         curr_year = int(date_today.strftime("%Y"))
 
         if not os.path.exists("./school_info.txt"):
-            self.school_year, self.meal_ids, self.first_week_school = self.init_school_info()
+            self.school_year, self.meals, self.first_week_school = self.init_school_info()
             return self.init_school_info()   # if fails => [], [], ""
 
         with open("school_info.txt") as f:
