@@ -6,7 +6,7 @@ import os
 
 from api_navigation.api_navigation import ApiNavigator
 from .helpers import *
-from utils.exception import UserLoginException, MealFetchingExcetpion
+from utils.exception import UserLoginException, MealFetchingException
 
 FORMAT = "%Y-%m-%d %H:%M:%S"
 # api = ApiNavigator()
