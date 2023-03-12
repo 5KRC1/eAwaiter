@@ -2,7 +2,7 @@ from bs4 import BeautifulSoup
 
 from datetime import datetime, timedelta
 import requests
-from eAwaiter.utils.exception import ChangingMealsException
+from utils.exception import ChangingMealsException
 
 
 class ApiNavigator:

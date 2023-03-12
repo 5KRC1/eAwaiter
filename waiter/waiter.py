@@ -4,9 +4,9 @@ from datetime import datetime, timedelta
 import json
 import os
 
-from eAwaiter.api_navigation.api_navigation import ApiNavigator
+from api_navigation.api_navigation import ApiNavigator
 from .helpers import *
-from eAwaiter.utils.exception import UserLoginException, MealFetchingException
+from utils.exception import UserLoginException, MealFetchingException
 
 FORMAT = "%Y-%m-%d %H:%M:%S"
 # api = ApiNavigator()
