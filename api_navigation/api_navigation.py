@@ -2,28 +2,28 @@ from bs4 import BeautifulSoup
 
 from datetime import datetime, timedelta
 import requests
-from utils.exception import ChangingMealsException
+from eAwaiter.utils.exception import ChangingMealsException
 
-class ApiNavigator():
+
+class ApiNavigator:
     session = requests.Session()
 
     def __init__(self, **kwargs):
         username = ""
         password = ""
-    
+
     def login(self):
-        '''Logs User In & Creates Session'''
+        """Logs User In & Creates Session"""
         login_url = "https://www.easistent.com/p/ajax_prijava"
         data = {
-                "uporabnik": self.username,
-                "geslo": self.password,
-                "pin":"",
-                "captcha":"",
-                "koda":""
-                }
+            "uporabnik": self.username,
+            "geslo": self.password,
+            "pin": "",
+            "captcha": "",
+            "koda": "",
+        }
         login = self.session.post(login_url, data=data)
         return login
-
 
     def get_menu_ids(self):
         # get menu ids
@@ -42,122 +42,185 @@ class ApiNavigator():
             meal_ids.append(meal_id)
         return meal_ids
 
-
-    def get_meal_data(self, week_num, meals, monday):
-        # return all meals + just subbed meals
-        """
-        returns:
-
-        """
+    def get_meal_data(self, week_num: int, meals: dict, monday: datetime) -> list:
+        # return all meals for a week
         data = {
-                "qversion": 1, #num of tries
-                "teden": week_num, #num of week before (if 4 will get 5)
-                "smer": "naprej" # direction
-                }
-        headers = {
-                "Content-Type": "application/x-www-form-urlencoded"
-                }
+            "qversion": 1,  # num of tries
+            "teden": week_num,  # num of week before (if 4 will get 5)
+            "smer": "naprej",  # direction
+        }
+        headers = {"Content-Type": "application/x-www-form-urlencoded"}
         meals_url = "https://www.easistent.com/dijaki/ajax_prehrana_obroki_seznam"
         site = self.session.post(meals_url, data=data, headers=headers)
         soup = BeautifulSoup(site.content, "html.parser")
         id = "ednevnik-seznam_ur_teden"
 
-        # get meals selected
-        week_data_selected = []  # [[meal_text | string, able_to_change | Bool, date | date], ...]
-        week_data_all = []  # [[[meal_text | string, able_to_change | Bool, date | date], ...], ...]
+        # get meal data
+        week_data = (
+            []
+        )  # [[{meal_text | string, able_to_change | Bool, date | date, meal_id | str, selected | bool}, ...], ...]
         for i in range(5):  # for each day of week
-            day = monday + timedelta(days=i)
-            day = day.strftime("%Y-%m-%d")
-            day_data_selected = []
-            day_data_all = []
-            changed = True
+            date = monday + timedelta(days=i)
+            day = date.strftime("%Y-%m-%d")
+
+            day_data = []  # each day (5meals)
             for meal_id in list(meals.keys()):
-                meal_data_all = []
-                meal_html_id = f"{id}-td-malica-{meal_id}-{day}-0"
-                meal_container = soup.find("td", id=meal_html_id)
+                meal_html_id = f"{id}-td-malica-{meal_id}-{day}-0"  # class of meal tags
+                meal_container = soup.find("td", id=meal_html_id).find(
+                    "div"
+                )  # found in all meals
 
-                # get meal text && check if holidays
-                try:
-                    meal_text = meal_container.find("div").find_all("div")[1].text.strip()
-                    
-                    if meal_text in ["Izbira menija ni več mogoča", "Prijava", "Nepravočasna odjava"]:
-                        raise IndexError
-                except Exception as e:
-                    if e == IndexError:
-                        # no meal that day => should already be signed off
-                        meal_text = ""
-                        changed = False
-                        day_data_selected.append(meal_text)
-                        day_data_selected.append(changed)
-                        day_data_selected.append(day)
-                        day_data_selected.append(meal_id)
-                        day_data_all.append(day_data_selected)
-                        # break
-                        continue
-                    self.send_mail(e)
-                    # break
-                    continue
-                # get selected meal
-                meal_change = meal_container.find("div").find_all("div")[2] # div | could be Naročen(date)Odjava / Odjava
-                try:
-                    meal_option = meal_change.find("a").text.strip()
-                except:
-                    meal_option = ""
-                if meal_option and meal_option == "Prijava":  # could be "Prijava" or "Odjava"
-                    # not selected meal
-                    # meal_text = ""
-                    # changed = False
-                    meal_data_all.append(meal_text)
-                    meal_data_all.append(changed)
-                    meal_data_all.append(day)
-                    meal_data_all.append(meal_id)
-                    day_data_all.append(meal_data_all)
-                    continue
-                # if no selected => prijava settings
-                # see if can be changed or just be signed off
-                if meal_change.find_all("span")[0].text.strip() in ["Izbira menija ni več mogoča", "Nepravočasna odjava"]:    # could be "Naročen" or "Izbira menija ni več mogoča"
-                    changed = False
-                day_data_selected.append(meal_text)
-                day_data_selected.append(changed)
-                day_data_selected.append(day)
-                day_data_selected.append(meal_id)
-                day_data_all.append(day_data_selected)
-                # break
-            week_data_selected.append(day_data_selected)
-            week_data_all.append(day_data_all)
-        return week_data_selected, week_data_all
-    
+                """
+                if not 3rd div:
+                    is_past => look     # unable to change
+                        if more than 2 elements
+                            is_selected
+                        else 
+                            is_normal
 
-    def prijava_odjava(self, action, meal_id, date):
-        '''
+                else
+                    is_present or future or future_loaded => look
+                        if not 3rd div
+                            future_not_loaded => no data
+                            
+                        if 1st element in 3rd div == a  # able to change
+                            future loaded normal
+                            
+                        if 1st element in 3rd div == image
+                            is_selected (future or present)
+                            
+                            check day differance
+                                if differance more than 8 days    # able to change
+                                else        # unable to change
+                            
+                        if 1st element in 3rd div == span   # unable to change
+                            normal present
+                """
+                if len(meal_container.find_all("div")) < 2:
+                    # holidays
+                    changable = False
+                    selected = False
+                    meal_text = ""
+                    meal_data = {
+                        "meal_text": meal_text,
+                        "meal_id": meal_id,
+                        "date": day,
+                        "changable": changable,
+                        "selected": selected,
+                    }
+                    day_data.append(meal_data)
+                    continue
+
+                if len(meal_container.find_all("div")) < 3:
+                    # past or future not loaded
+                    changable = False
+                    selected = True
+
+                    second_div = meal_container.find_all("div")[
+                        1
+                    ]  # if text => past else future
+                    meal_text = second_div.text.strip()
+                    if (
+                        len(list(meal_container.findChildren(recursive=False))) < 3
+                    ):  # if tags => past not selected
+                        # if len(second_div.find_all(True)) > 0:  #finds all tags, no text
+                        # future => not loaded
+                        # meal_text = ""
+                        if meal_text == "Prijava":  # future
+                            meal_text = ""
+                        # past not selected
+                        selected = False
+
+                    meal_data = {
+                        "meal_text": meal_text,
+                        "meal_id": meal_id,
+                        "date": day,
+                        "changable": changable,
+                        "selected": selected,
+                    }
+                    day_data.append(meal_data)
+                    continue
+
+                second_div = meal_container.find_all("div")[
+                    1
+                ]  # if text => past else future
+                meal_text = second_div.text.strip()
+
+                third_div = meal_container.find_all("div")[2]
+                if len(list(third_div.findChildren(recursive=False))) < 3:
+                    # future normal or present
+                    selected = False
+                    changable = False
+
+                    if (
+                        third_div.find_all(True)[0].text == "Prijava"
+                    ):  # present would be "Izbira menija ni več mogoča"
+                        changable = True
+
+                    meal_data = {
+                        "meal_text": meal_text,
+                        "meal_id": meal_id,
+                        "date": day,
+                        "changable": changable,
+                        "selected": selected,
+                    }
+                    day_data.append(meal_data)
+                    continue
+
+                # selected present or future
+                # check day differance -> more than 8  is changable
+                today = datetime.today()
+                changable = True
+                selected = True
+                if (date - today).days <= 8:
+                    # present => not able to change
+                    changable = False
+                if (
+                    third_div.find_all("span")[0].text.strip() == "Odjavljen"
+                ):  # could also be Prijavljen, Naročen
+                    selected = False
+                meal_data = {
+                    "meal_text": meal_text,
+                    "meal_id": meal_id,
+                    "date": day,
+                    "changable": changable,
+                    "selected": selected,
+                }
+                day_data.append(meal_data)
+            week_data.append(day_data)
+        return week_data
+
+    def prijava_odjava(self, action: str, meal_id: str, date: datetime) -> bool:
+        """
         session = session where logged in
         action = "prijava" or "odjava"
         meal_id = what to change meal to
         date = date of changing menu
-        '''
+        """
         url = "https://www.easistent.com/dijaki/ajax_prehrana_obroki_prijava"
         data = {
-                "tip_prehrane": "malica",
-                "id_lokacija": "0",
-                "akcija": f"{action}", # either "prijava" or "odjava"
-                "id_meni": f"{meal_id}", # meals ids (see main_screen)
-                "datum": f"{date}" # date (MainScreen().date_of_menu)
-                }
+            "tip_prehrane": "malica",
+            "id_lokacija": "0",
+            "akcija": f"{action}",  # either "prijava" or "odjava"
+            "id_meni": f"{meal_id}",  # meals ids (see main_screen)
+            "datum": f"{date}",  # date (MainScreen().date_of_menu)
+        }
         headers = {
-                "Content-Type": "application/x-www-form-urlencoded",
-                "X-Requested-With": "XMLHttpRequest"
-                }
+            "Content-Type": "application/x-www-form-urlencoded",
+            "X-Requested-With": "XMLHttpRequest",
+        }
         try:
             response = self.session.post(url, data=data, headers=headers)
-            if not response.json()["status"]: # "ok" if successful "" if unsuccessful
-                raise ChangingMealsException(f"Unable to change meal ({action} to '{meal_id}' meal) for {date}!")
+            if not response.json()["status"]:  # "ok" if successful "" if unsuccessful
+                raise ChangingMealsException(
+                    f"Unable to change meal ({action} to '{meal_id}' meal) for {date}!"
+                )
             # app.send_notification("Success", "Meal changed", True)
             self.send_mail(f"Meal changed ({action} to '{meal_id}' meal) for {date}!")
             return True
         except Exception as e:
             self.send_mail(e)
             return False
-    
 
-    def send_mail(self, message):
+    def send_mail(self, message: str):
         print(message)
